@@ -20,7 +20,7 @@ Puppet::Type.type(:jboss_deploy).provide(:jbosscli, :parent => Puppet::Provider:
     if res[:result] == false
         return false
     end
-    for line in res[:lines]
+    res[:lines].each_line do |line|
       line.strip!
       if line =~ /^#{@resource[:name]}[ ]+/
         Puppet.debug "Deployment found: #{line}"
