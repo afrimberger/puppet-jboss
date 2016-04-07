@@ -7,6 +7,11 @@ class Puppet_X::Coi::Jboss::Functions
     # @param args [Array] should be only one argument in array
     # @return [string] casted value to string
     def jboss_to_s args
+
+      if ! args.is_a?(Array)
+        args = [args]
+      end
+
       if args.size != 1
         raise(Puppet::ParseError, "jboss_to_s(): Wrong number of arguments given (#{args.size} for 1)")
       end
