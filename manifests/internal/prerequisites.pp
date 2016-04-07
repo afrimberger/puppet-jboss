@@ -7,5 +7,7 @@
 # None
 #
 class jboss::internal::prerequisites {
-  ensure_packages(['unzip'])
+  if ! defined(Package['unzip']) {
+    ensure_packages(['unzip'])
+  }
 }
