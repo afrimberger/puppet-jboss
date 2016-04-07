@@ -241,6 +241,28 @@ class Puppet_X::Coi::Jboss::Provider::AbstractJbossCli < Puppet::Provider
     # JBoss expression and Long value handling
     ret[:lines].gsub!(/expression \"(.+)\",/, '\'\1\',')
     ret[:lines].gsub!(/=> (\d+)L/, '=> \1')
+
+    # remove byte sequences from output, because it's unparsable
+    # Example:
+    # {
+    # "outcome" => "success",
+    #     "result" => {
+    #     "content" => [{"hash" => bytes {
+    #                     0x80, 0x1f, 0x47, 0x2f, 0x11, 0x04, 0xd8, 0x6b,
+    #                         0x76, 0xbb, 0xa0, 0x6f, 0x63, 0x71, 0x44, 0xc7,
+    #                         0x6d, 0x4c, 0xbf, 0xff
+    #                   }}],
+    #     "enabled" => true,
+    #     "name" => "activemq-rar.rar",
+    #     "persistent" => true,
+    #     "runtime-name" => "activemq-rar.rar",
+    #     "subdeployment" => undefined,
+    #     "subsystem" => undefined
+    # }
+    # }
+    ret[:lines].gsub!(/0x[0-9a-f]+[,]*/, '')
+    ret[:lines].gsub!(/=> bytes /, '=> ')
+
     begin
       evalines = eval ret[:lines]
       Puppet.debug evalines.inspect

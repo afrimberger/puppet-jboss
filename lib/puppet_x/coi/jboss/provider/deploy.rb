@@ -112,12 +112,15 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
   end
 
   def name_exists?
-    res = executeWithoutRetry "/deployment=#{@resource[:name]}:read-resource()"
-    if res['outcome'] == 'failed'
+    res = executeAndGet "/deployment=#{@resource[:name]}:read-resource()"
+
+    if not res[:result]
         return false
     end
-    unless res['name'].nil?
-      Puppet.debug "Deployment found: #{res['name']}"
+
+    data = res[:data]
+    unless data['name'].nil?
+      Puppet.debug "Deployment found: #{data['name']}"
       return true
     end
     Puppet.debug "No deployment matching #{@resource[:name]} found."
