@@ -334,12 +334,12 @@ class Puppet_X::Coi::Jboss::Provider::AbstractJbossCli < Puppet::Provider
 
     toupdate.reject { |prop_name, prop_val|
       currval_s = Puppet_X::Coi::Jboss::Functions.jboss_to_s existing_props[prop_name]
-      propval_s = Puppet_X::Coi::Jboss::Functions.jboss_to_s prop_val
+      newval_s = Puppet_X::Coi::Jboss::Functions.jboss_to_s new_props[prop_name]
 
-      Puppet.debug "name=#{prop_name},currval='#{currval_s}',newval='#{prop_val}',eql?='#{currval_s.eql?(propval_s)}'"
-      propval_s.eql?(currval_s)
+      Puppet.debug "name=#{prop_name},currval='#{currval_s}',newval='#{newval_s}',eql?='#{currval_s.eql?(newval_s)}'"
+      currval_s.eql?(newval_s)
     }.each do |prop_name, prop_val|
-      updateconfprop basepath, prop_name, prop_val
+      updateconfprop basepath, prop_name, new_props[prop_name]
     end
 
   end
