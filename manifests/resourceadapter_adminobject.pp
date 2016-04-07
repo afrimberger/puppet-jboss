@@ -62,6 +62,6 @@ define jboss::resourceadapter_adminobject (
   if jboss_to_bool($::jboss_running) {
     Jboss_resourceadapter_adminobject[$name] ~> Service[$jboss::internal::service::servicename]
   } else {
-    Anchor['jboss::service::end'] -> Jboss_resourceadapter[$name] ~> Exec['jboss::service::restart']
+    Anchor['jboss::service::end'] -> Jboss_resourceadapter_adminobject[$name] ~> Exec['jboss::service::restart']
   }
 }
