@@ -90,7 +90,16 @@ Puppet::Type.type(:jboss_resourceadapter).provide(:jbosscli,
   end
 
   def connectionproperties
-    getconnectionattr jndiname
+    # support currently only the first datasource.
+    # TODO: Move connectionproperties to its own type
+    ret = {}
+    $data['connection-definitions'][jndiname.first].select { |k, v|
+      @resource[:connectionproperties].has_key?(k)
+    }.each { |k, v|
+      ret[k.to_s] = v.to_s
+    }
+
+    ret
   end
 
   def connectionproperties= value
@@ -255,10 +264,16 @@ Puppet::Type.type(:jboss_resourceadapter).provide(:jbosscli,
         createconn jndi, config
         next
       end
+
+      currval_s = Puppet_X::Coi::Jboss::Functions.jboss_to_s $data['connection-definitions'][jndi][name]
+      value_s = Puppet_X::Coi::Jboss::Functions.jboss_to_s value
+      Puppet.debug "name=#{name},currval='#{currval_s}',newval='#{value}',eql?='#{currval_s.eql?(value_s)}'"
       connectionName = escapeforjbname jndi
       if value.nil? or "undef".eql?(value) or "nil".eql?(value)
         cmd = compilecmd "/subsystem=resource-adapters/resource-adapter=#{@resource[:name]}/connection-definitions=#{connectionName}:undefine-attribute(name=#{name})"
         bringDown "Resource adapter connection definition attribute #{name}", cmd
+      elsif currval_s.eql?(value_s)
+        # do nothing (idempotency)
       else
         setattribute "/subsystem=resource-adapters/resource-adapter=#{@resource[:name]}/connection-definitions=#{connectionName}", name, value
       end
