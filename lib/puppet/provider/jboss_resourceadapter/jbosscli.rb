@@ -301,7 +301,7 @@ Puppet::Type.type(:jboss_resourceadapter).provide(:jbosscli,
     end
 
     @resource[:configproperties].each do |k, v|
-      createconfprop k, v
+      createconfprop basepath, k, v
     end
 
   end

@@ -5,11 +5,9 @@ Puppet::Type.type(:jboss_resourceadapter_adminobject).provide(:jbosscli,
 
   def create
     params = prepareconfig[:basics]
-    basicsParams = makejbprops params[:basics]
+    basicsParams = makejbprops params
     cmd = compilecmd "#{basepath}:add(#{basicsParams})"
     bringUp "Resource adapter Admin Object ", cmd
-    # createConnections
-    # createconfprops
   end
 
   def destroy
