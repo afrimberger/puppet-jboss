@@ -40,7 +40,8 @@ define jboss::resourceadapter (
   $profile                 = $::jboss::profile,
   $controller              = $::jboss::controller,
   $runasdomain             = $::jboss::runasdomain,
-  $configproperties        = {}
+  $configproperties        = {},
+  $connectionproperties    = {},
 ) {
   include jboss
   include jboss::internal::service
@@ -60,6 +61,7 @@ define jboss::resourceadapter (
     profile              => $profile,
     runasdomain          => $runasdomain,
     configproperties     => $configproperties,
+    connectionproperties => $connectionproperties,
     require              => Anchor['jboss::package::end'],
   }
 

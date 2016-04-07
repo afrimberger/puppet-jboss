@@ -89,6 +89,16 @@ Puppet::Type.type(:jboss_resourceadapter).provide(:jbosscli,
     setconfigprops value
   end
 
+  def connectionproperties
+    getconnectionattr jndiname
+  end
+
+  def connectionproperties= value
+    value.each { |k, v|
+      setconnectionattr k, v
+    }
+  end
+
   def classname
     getconnectionattr 'class-name'
   end
@@ -246,7 +256,7 @@ Puppet::Type.type(:jboss_resourceadapter).provide(:jbosscli,
         next
       end
       connectionName = escapeforjbname jndi
-      if value.nil?
+      if value.nil? or "undef".eql?(value) or "nil".eql?(value)
         cmd = compilecmd "/subsystem=resource-adapters/resource-adapter=#{@resource[:name]}/connection-definitions=#{connectionName}:undefine-attribute(name=#{name})"
         bringDown "Resource adapter connection definition attribute #{name}", cmd
       else

@@ -45,6 +45,11 @@ Puppet::Type.newtype(:jboss_resourceadapter) do
     defaultto {}
   end
 
+  newproperty(:connectionproperties) do
+    desc "The resource connection properties"
+    defaultto {}
+  end
+
   newparam(:profile) do
     desc "The JBoss profile name"
     defaultto "full"
