@@ -258,4 +258,91 @@ class Puppet_X::Coi::Jboss::Provider::AbstractJbossCli < Puppet::Provider
   end
 
 
+
+  def reload
+    cmd = compilecmd "/:reload"
+    executeWithFail("Reload ", cmd, '')
+  end
+
+
+
+  def getconfigprops data
+    ret = {}
+
+    if data['config-properties'].nil?
+      data['config-properties'] = {}
+    end
+
+    data['config-properties'].each do |prop_key, val_hash|
+      key = Puppet_X::Coi::Jboss::Functions.jboss_to_s prop_key
+      val = Puppet_X::Coi::Jboss::Functions.jboss_to_s val_hash['value']
+      ret[key] = val
+    end
+
+    return ret
+  end
+
+
+  def basepathconfprop basepath, prop_name
+    "#{basepath}/config-properties=#{prop_name}"
+  end
+
+  def createconfprop basepath, prop_name, prop_val
+    pathpref = basepathconfprop basepath, prop_name
+    cmd = compilecmd "#{pathpref}:add(value=\"#{prop_val}\")"
+    executeWithFail("Config Property", cmd, 'to create')
+  end
+
+  def destroyconfprop basepath, prop_name
+    pathpref = basepathconfprop basepath, prop_name
+    cmd = compilecmd "#{pathpref}:remove()"
+    executeWithFail("Config Property", cmd, 'to destroy')
+  end
+
+  def updateconfprop basepath, prop_name, new_val
+    if new_val.nil?
+      destroyconfprop basepath, prop_name
+    else
+      # Writing the value is due to a JBoss restriction not possible:
+      #  Warning: JBoss CLI command failed, try 1/3, last status: 1, message: {
+      #   "outcome" => "failed",
+      #   "failure-description" => "JBAS014639: Attribute value is not writable",
+      #   "rolled-back" => true
+      #  }
+      destroyconfprop basepath, prop_name
+      reload
+      createconfprop basepath, prop_name, new_val
+    end
+  end
+
+  def setconfigprops basepath, existing_props, new_props
+    toremove = existing_props.reject { |k| new_props.key?(k)} # existing_props - new_props
+    toadd    = new_props.reject {|k| existing_props.key?(k)}  # new_props - existing_props
+    toupdate = existing_props.reject {|k| toremove.key?(k) or toadd.key?(k)} # existing_props - toremove - toadd
+
+    trace 'configprops :: toremove=%s' % [toremove.inspect]
+    trace 'configprops :: toadd=%s' % [toadd.inspect]
+    trace 'configprops :: toupdate=%s' % [toupdate.inspect]
+
+    toremove.each do |prop_name, prop_val|
+      destroyconfprop basepath, prop_name
+    end
+
+    toadd.each do |prop_name, prop_val|
+      createconfprop basepath, prop_name, prop_val
+    end
+
+    toupdate.reject { |prop_name, prop_val|
+      currval_s = Puppet_X::Coi::Jboss::Functions.jboss_to_s existing_props[prop_name]
+      propval_s = Puppet_X::Coi::Jboss::Functions.jboss_to_s prop_val
+
+      Puppet.debug "name=#{prop_name},currval='#{currval_s}',newval='#{prop_val}',eql?='#{currval_s.eql?(propval_s)}'"
+      propval_s.eql?(currval_s)
+    }.each do |prop_name, prop_val|
+      updateconfprop basepath, prop_name, prop_val
+    end
+
+  end
+
+
 end

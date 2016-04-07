@@ -82,11 +82,11 @@ Puppet::Type.type(:jboss_resourceadapter).provide(:jbosscli,
   end
 
   def configproperties
-    getconfigprops
+    getconfigprops $data
   end
 
   def configproperties= value
-    setconfigprops value
+    setconfigprops basepath, configproperties, value
   end
 
   def connectionproperties
@@ -294,11 +294,6 @@ Puppet::Type.type(:jboss_resourceadapter).provide(:jbosscli,
   end
 
 
-  def reload
-    cmd = compilecmd "/:reload"
-    executeWithFail("Reload ", cmd, '')
-  end
-
 
   def createconfprops
     if $data.nil?
@@ -311,78 +306,14 @@ Puppet::Type.type(:jboss_resourceadapter).provide(:jbosscli,
 
   end
 
-  def getconfigprops
-    ret = {}
 
-    if $data['config-properties'].nil?
-      $data['config-properties'] = {}
-    end
-
-    $data['config-properties'].each do |prop_key, val_hash|
-      ret[prop_key] = val_hash['value']
-    end
-
-    return ret
-  end
-
-  def basecmdconfigprop prop_name
-    "/subsystem=resource-adapters/resource-adapter=#{@resource[:name]}/config-properties=#{prop_name}"
+  def basepath
+    "/subsystem=resource-adapters/resource-adapter=#{@resource[:name]}"
   end
 
   def getconfprop prop_name
     $data['config-properties'][prop_name]
   end
 
-  def createconfprop prop_name, prop_val
-     cmd = compilecmd "#{basecmdconfigprop prop_name}:add(value=\"#{prop_val}\")"
-     executeWithFail("Config Property", cmd, 'to create')
-  end
-
-  def destroyconfprop prop_name
-    cmd = compilecmd "#{basecmdconfigprop prop_name}:remove()"
-    executeWithFail("Config Property", cmd, 'to destroy')
-  end
-
-  def updateconfprop prop_name, new_val
-    curr_val = getconfprop prop_name
-
-    if new_val.nil?
-      destroyconfprop prop_name
-    else
-      # Writing the value is due to a JBoss restriction not possible:
-      #  Warning: JBoss CLI command failed, try 1/3, last status: 1, message: {
-      #   "outcome" => "failed",
-      #   "failure-description" => "JBAS014639: Attribute value is not writable",
-      #   "rolled-back" => true
-      #  }
-      destroyconfprop prop_name
-      reload
-      createconfprop prop_name, new_val
-    end
-  end
-
-  def setconfigprops new_props
-    existing_props = getconfigprops
-    toremove = existing_props.reject { |k| new_props.key?(k)} # existing_props - new_props
-    toadd    = new_props.reject {|k| existing_props.key?(k)}  # new_props - existing_props
-    toupdate = existing_props.reject {|k| toremove.key?(k) or toadd.key?(k)} # existing_props - toremove - toadd
-
-    trace 'configprops :: toremove=%s' % [toremove.inspect]
-    trace 'configprops :: toadd=%s' % [toadd.inspect]
-    trace 'configprops :: toupdate=%s' % [toupdate.inspect]
-
-    toremove.each do |prop_name, prop_val|
-      destroyconfprop prop_name
-    end
-
-    toadd.each do |prop_name, prop_val|
-      createconfprop prop_name, prop_val
-    end
-
-    toupdate.each do |prop_name, prop_val|
-      updateconfprop prop_name, prop_val
-    end
-
-  end
 
 end
