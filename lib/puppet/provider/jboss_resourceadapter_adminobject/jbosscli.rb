@@ -34,7 +34,7 @@ Puppet::Type.type(:jboss_resourceadapter_adminobject).provide(:jbosscli,
   end
 
   def jndiname= newval
-    setattribute basepath, newval
+    setattribute basepath, 'jndi-name', newval
   end
 
   def usejavacontext
@@ -42,7 +42,7 @@ Puppet::Type.type(:jboss_resourceadapter_adminobject).provide(:jbosscli,
   end
 
   def usejavacontext= newval
-    setattribute 'use-java-context', newval
+    setattribute basepath, 'use-java-context', newval
   end
 
   def classname
