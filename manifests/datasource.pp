@@ -67,6 +67,7 @@ define jboss::datasource (
   $minpoolsize                 = jboss_to_i(hiera('jboss::datasource::minpoolsize', 1)),
   $maxpoolsize                 = jboss_to_i(hiera('jboss::datasource::maxpoolsize', 50)),
   $enabled                     = jboss_to_bool(hiera('jboss::datasource::enabled', true)),
+  $urlquery                    = '',
   $options                     = {},
   $runasdomain                 = $::jboss::runasdomain,
 ) {
@@ -148,6 +149,7 @@ define jboss::datasource (
     host        => $host,
     port        => $port,
     jdbcscheme  => $jdbcscheme,
+    urlquery    => $urlquery,
     options     => $actual_options,
     require     => [
       Anchor['jboss::package::end'],

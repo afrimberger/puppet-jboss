@@ -205,6 +205,14 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     writeConnection :Scheme, value
   end
 
+  def urlquery
+    connectionHash()[:Query].to_s
+  end
+
+  def urlquery= value
+    writeConnection :Query, value
+  end
+
   def host
     connectionHash()[:ServerName].to_s
   end
@@ -342,6 +350,8 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
         return :port
       when :DatabaseName
         return :dbname
+      when :Query
+        return :urlquery
       else
         raise 'Unknown property: ' + property
     end
@@ -391,7 +401,7 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     if h2?
       parseConnectionUrl(readXaProperty 'URL')
     else
-      props = [:Scheme, :ServerName, :PortNumber, :DatabaseName]
+      props = [:Scheme, :ServerName, :PortNumber, :DatabaseName, :Query]
       out = {}
       props.each do |sym|
         property = readXaProperty sym
@@ -411,6 +421,7 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
       :ServerName   => nil,
       :PortNumber   => nil,
       :DatabaseName => nil,
+      :Query        => nil,
     }
     begin
       if xa? then connectionHashFromXa else connectionHashFromStd end
@@ -479,6 +490,7 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
       :ServerName   => uri.host,
       :PortNumber   => uri.port,
       :DatabaseName => uri.path[1..-1],
+      :Query        => uri.query,
     }
   end
 
@@ -501,12 +513,19 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     host = @resource[:host]
     port = @resource[:port]
     dbname = @resource[:dbname]
+    options = @resource[:urlquery]
+    query   = ''
+
+    unless options.eql?('')
+      query = "?#{options}"
+    end
+
     if oracle?
       port = 1521 if port <= 0
-      url = "#{scheme}@#{host}:#{port}:#{dbname}"
+      url = "#{scheme}@#{host}:#{port}:#{dbname}#{query}"
     else
       port_with_colon = if port > 0 then ":#{port}" else '' end
-      url = "#{scheme}://#{host}#{port_with_colon}/#{dbname}"
+      url = "#{scheme}://#{host}#{port_with_colon}/#{dbname}#{query}"
     end
     return "jdbc:#{url}"
   end

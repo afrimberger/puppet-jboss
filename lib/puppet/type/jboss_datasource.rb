@@ -132,6 +132,12 @@ Puppet::Type.newtype(:jboss_datasource) do
     end
   end
 
+  newproperty(:urlquery) do
+    desc "query part of the connection url"
+
+    defaultto ''
+  end
+
   newproperty(:port) do
     desc "port to connect"
     isrequired
