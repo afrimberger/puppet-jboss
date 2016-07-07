@@ -23,6 +23,8 @@ class jboss::internal::configuration {
   $logfile       = "${logdir}/console.log"
   $server_opts   = $jboss::server_opts
   $java_opts     = $jboss::java_opts
+  $startup_wait  = $jboss::startup_wait
+  $shutdown_wait = $jboss::shutdown_wait
 
   anchor { 'jboss::configuration::begin':
     require => Anchor['jboss::package::end'],

@@ -30,6 +30,12 @@ class jboss::params inherits jboss::internal::params {
   # Group for Jboss Application Server
   $jboss_group      = hiera('jboss::params::jboss_group', 'jboss')
 
+  # The amount of time to wait for startup
+  $startup_wait     = hiera('jboss::params::startup_wait', '30')
+
+  # The amount of time to wait for shutdown
+  $shutdown_wait    = hiera('jboss::params::shutdown_wait', '30')
+
   # Target installation directory root
   $install_dir      = hiera('jboss::params::install_dir', '/usr/lib')
 

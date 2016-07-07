@@ -73,6 +73,8 @@ class jboss (
   $product          = $jboss::params::product,
   $jboss_user       = $jboss::params::jboss_user,
   $jboss_group      = $jboss::params::jboss_group,
+  $startup_wait     = $jboss::params::startup_wait,
+  $shutdown_wait    = $jboss::params::shutdown_wait,
   $version          = $jboss::params::version,
   $download_url     = undef,
   $java_autoinstall = $jboss::params::java_autoinstall,
