@@ -129,6 +129,17 @@ define jboss::datasource (
     }
   }
 
+  if $ensure == 'present' {
+    $require_ds = [
+      Jboss_jdbcdriver[$drivername],
+      Anchor['jboss::package::end'],
+    ]
+  } else {
+    $require_ds = [
+      Anchor['jboss::package::end'],
+    ]
+  }
+
   jboss_datasource { $name:
     ensure      => $ensure,
     dbname      => $dbname,
@@ -151,9 +162,7 @@ define jboss::datasource (
     jdbcscheme  => $jdbcscheme,
     urlquery    => $urlquery,
     options     => $actual_options,
-    require     => [
-      Anchor['jboss::package::end'],
-    ],
+    require     => $require_ds,
   }
 
   if jboss_to_bool($::jboss_running) {
