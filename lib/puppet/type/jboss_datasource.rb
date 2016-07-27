@@ -71,6 +71,14 @@ Puppet::Type.newtype(:jboss_datasource) do
   newproperty(:options) do
     desc "Extra options for datasource or xa-datasource"
 
+    def insync?(is)
+      # convert values to strings and compare the result
+      is_tmp = is.map {|k,v| {k => v.to_s} }
+      should_tmp = should.map {|k,v| {k => v.to_s}}
+
+      is_tmp.sort_by(&:hash) == should_tmp.sort_by(&:hash)
+    end
+
     validate do |value|
       matcher = Puppet_X::Coi::Jboss::BuildinsUtils::HashlikeMatcher.new(value)
       unless Puppet_X::Coi::Jboss::Constants::ABSENTLIKE_WITH_S.include?(value) or matcher.hashlike?
