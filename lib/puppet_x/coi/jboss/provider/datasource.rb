@@ -13,6 +13,14 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     cmd.push "--max-pool-size=#{@resource[:maxpoolsize].inspect}"
     cmd.push "--user-name=#{@resource[:username].inspect}"
     cmd.push "--password=#{@resource[:password].inspect}"
+
+    if xa? and exists_manual(false)
+      destroy_ds(false)
+    elsif not xa? and exists_manual(true)
+      destroy_ds(true)
+    end
+    exists_manual(true)
+
     if @resource[:xa]
       xa_properties = xa_datasource_properties_wrapper(createXaProperties)
       cmd.push "--xa-datasource-properties=#{xa_properties}"
@@ -28,11 +36,13 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
   end
 
   def destroy
-    cmd = "#{create_delete_cmd} remove --name=#{@resource[:name]}"
-    bringDown 'Datasource', cmd
+    destroy_ds(xa?)
   end
 
-
+  def destroy_ds(is_xa)
+    cmd = "#{create_delete_cmd(is_xa)} remove --name=#{@resource[:name]}"
+    bringDown 'Datasource', cmd
+  end
 
   def setenabled setting
     Puppet.debug "setenabled #{setting.inspect}"
@@ -72,18 +82,22 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
   end
 
   def exists?
+    exists_manual(xa?)
+  end
+
+  def exists_manual(is_xa = xa?)
     prepare_resource
     if @resource[:dbname].nil?
       @resource[:dbname] = @resource[:name]
     end
     @data = nil
-    cmd = compilecmd "#{datasource_path}:read-resource(recursive=true)"
+    cmd = compilecmd "#{datasource_path(is_xa)}:read-resource(recursive=true)"
     res = executeAndGet cmd
     if(res[:result] == false)
-        Puppet.debug "Datasorce (xa: #{xa?}) `#{@resource[:name]}` does NOT exist"
-        return false
+      Puppet.debug "Datasorce (xa: #{is_xa}) `#{@resource[:name]}` does NOT exist"
+      return false
     end
-    Puppet.debug "Datasorce (xa: #{xa?}) `#{@resource[:name]}` exists: #{res[:data].inspect}"
+    Puppet.debug "Datasorce (xa: #{is_xa}) `#{@resource[:name]}` exists: #{res[:data].inspect}"
     @data = res[:data]
     return true
   end
@@ -387,6 +401,7 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     end
     readed = getattrib('xa-datasource-properties')
     key = property.to_s
+    return nil if readed[key].nil?
     bm = BlankMatcher.new(readed[key]['value'])
     if readed.nil? or readed[key].nil? or bm.blank?
       name = @resource[:name]
@@ -441,9 +456,9 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     scheme[0, 2] == 'h2'
   end
 
-  def create_delete_cmd
+  def create_delete_cmd(is_xa = xa?)
     cmd = "data-source"
-    if xa?
+    if is_xa
       cmd = "xa-#{cmd}"
     end
     if @resource[:runasdomain]
@@ -452,16 +467,16 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     return cmd
   end
 
-  def datasource_type
-    if xa?
+  def datasource_type(is_xa = xa?)
+    if is_xa
       "xa-data-source"
     else
       "data-source"
     end
   end
 
-  def datasource_path
-    "/subsystem=datasources/#{datasource_type}=#{@resource[:name]}"
+  def datasource_path(is_xa = xa?)
+    "/subsystem=datasources/#{datasource_type(is_xa)}=#{@resource[:name]}"
   end
 
   def parseOracleConnectionUrl(url)
