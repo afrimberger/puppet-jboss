@@ -137,7 +137,7 @@ module Puppet_X::Coi::Jboss::Provider::ConfigNode
       hash = {}
       @property_hash[:properties] = {} if @property_hash[:properties].nil?
       @property_hash[:properties].each do |k, v|
-        if v.nil? or !!v == v or v.is_a? Numeric or v.is_a? Hash or v.is_a? Array
+        if v.nil? or !!v == v or v.is_a? Hash or v.is_a? Array
           hash[k.to_s] = v
         else
           hash[k.to_s] = v.to_s
