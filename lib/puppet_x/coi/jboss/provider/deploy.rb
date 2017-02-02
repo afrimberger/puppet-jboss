@@ -9,7 +9,14 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
   end
 
   def redeploy_on_refresh
-    Puppet.debug('Refresh event from deploy')
+    Puppet.debug('-----------------------> Refresh event from deploy')
+    if @resource[:remove_on_refresh]
+      Puppet.info("Refresh event triggered undeploy of #{@resource[:jndi]}")
+      undeploy
+      return
+    end
+
+    Puppet.info("Refresh event triggered deploy of #{@resource[:jndi]}")
     undeploy if @resource[:redeploy_on_refresh]
     deploy
   end
@@ -31,7 +38,7 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
       return @resource[:servergroups]
     end
     servergroups = @resource[:servergroups]
-    res = execute("deployment-info --name=#{@resource[:name]}")
+    res = execute("deployment-info --name=#{@resource[:jndi]}")
     if not res[:result]
       return []
     end
@@ -58,7 +65,7 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
     Puppet.debug(value.inspect())
 
     toset = value - current
-    cmd = "deploy --name=#{@resource[:name]} --server-groups=#{toset.join(',')}#{runtime_name_param_with_space_or_empty_string}"
+    cmd = "deploy --name=#{@resource[:jndi]} --server-groups=#{toset.join(',')}#{runtime_name_param_with_space_or_empty_string}"
     res = bringUp('Deployment', cmd)
   end
 
@@ -81,7 +88,7 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
   end
 
   def deploy
-    cmd = "deploy #{@resource[:source]} --name=#{@resource[:name]}#{runtime_name_param_with_space_or_empty_string}"
+    cmd = "deploy #{@resource[:source]} --name=#{@resource[:jndi]}#{runtime_name_param_with_space_or_empty_string}"
     if @resource[:runasdomain]
       servergroups = @resource[:servergroups]
       if servergroups.nil? or servergroups.empty? or servergroups == ['']
@@ -98,7 +105,7 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
   end
 
   def undeploy
-    cmd = "undeploy #{@resource[:name]}"
+    cmd = "undeploy #{@resource[:jndi]}"
     if @resource[:runasdomain]
       servergroups = @resource[:servergroups]
       if servergroups.nil? or servergroups.empty? or servergroups == ['']
@@ -112,7 +119,7 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
   end
 
   def name_exists?
-    res = executeAndGet "/deployment=#{@resource[:name]}:read-resource()"
+    res = executeAndGet "/deployment=#{@resource[:jndi]}:read-resource()"
 
     if not res[:result]
         return false
@@ -123,7 +130,7 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
       Puppet.debug "Deployment found: #{data['name']}"
       return true
     end
-    Puppet.debug "No deployment matching #{@resource[:name]} found."
+    Puppet.debug "No deployment matching #{@resource[:jndi]} found."
     return false
   end
 end

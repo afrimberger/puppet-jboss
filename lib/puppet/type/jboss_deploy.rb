@@ -8,12 +8,21 @@ Puppet::Type.newtype(:jboss_deploy) do
     isrequired
   end
 
+  newparam(:jndi) do
+    desc "jndi name"
+  end
+
   newparam(:source) do
     desc "Path to the EAR/WAR file."
   end
 
   newparam(:redeploy_on_refresh, :boolean => true) do
     desc "Force redeployment"
+    defaultto true
+  end
+
+  newparam(:remove_on_refresh, :boolean => false) do
+    desc "Remove resource on refreseh"
     defaultto true
   end
 

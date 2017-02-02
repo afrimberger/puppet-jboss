@@ -24,6 +24,7 @@ define jboss::deploy (
   $ensure              = 'present',
   $jndi                = $name,
   $redeploy_on_refresh = true,
+  $remove_on_refresh   = false,
   $servergroups        = hiera('jboss::deploy::servergroups', undef),
   $controller          = $::jboss::controller,
   $runasdomain         = $::jboss::runasdomain,
@@ -36,11 +37,13 @@ define jboss::deploy (
     validate_re($runtime_name, '.+(\.ear|\.zip|\.war|\.jar)$', 'Invalid file extension, module only supports: .jar, .war, .ear, .rar')
   }
 
-  jboss_deploy { $jndi:
+  jboss_deploy { $name:
     ensure              => $ensure,
     source              => $path,
+    jndi                => $jndi,
     runasdomain         => $runasdomain,
     redeploy_on_refresh => $redeploy_on_refresh,
+    remove_on_refresh   => $remove_on_refresh,
     servergroups        => $servergroups,
     controller          => $controller,
     ctrluser            => $jboss::internal::runtime::node::username,
