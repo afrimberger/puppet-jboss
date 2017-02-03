@@ -31,6 +31,7 @@ define jboss::deploy (
   $runtime_name        = undef,
 ) {
   include jboss
+  include jboss::internal::refresh_deploy
   include jboss::internal::runtime::node
 
   if $runtime_name != undef {
@@ -50,8 +51,7 @@ define jboss::deploy (
     ctrlpasswd          => $jboss::internal::runtime::node::password,
     runtime_name        => $runtime_name,
     require             => [
-      Anchor['jboss::end'],
-      Exec['jboss::service::restart'],
+      Exec['jboss::service::restart_refresh_deploy'],
     ],
   }
 
