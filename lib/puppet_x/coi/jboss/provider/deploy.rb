@@ -1,7 +1,7 @@
 # A class for JBoss deploy
 module Puppet_X::Coi::Jboss::Provider::Deploy
   def create
-    deploy
+    deploy unless @resource[:remove_on_refresh]
   end
 
   def destroy
@@ -11,8 +11,10 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
   def redeploy_on_refresh
     Puppet.debug('-----------------------> Refresh event from deploy')
     if @resource[:remove_on_refresh]
-      Puppet.info("Refresh event triggered undeploy of #{@resource[:jndi]}")
-      undeploy
+      if exists?
+        Puppet.info("Refresh event triggered undeploy of #{@resource[:jndi]}")
+        undeploy
+      end
       return
     end
 
