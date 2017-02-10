@@ -19,7 +19,7 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
     end
 
     Puppet.info("Refresh event triggered deploy of #{@resource[:jndi]}")
-    undeploy if @resource[:redeploy_on_refresh]
+    undeploy if @resource[:redeploy_on_refresh] and exists?
     deploy
   end
 
