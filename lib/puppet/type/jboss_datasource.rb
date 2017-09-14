@@ -159,6 +159,20 @@ Puppet::Type.newtype(:jboss_datasource) do
     end
   end
 
+  newproperty(:oraurlstyle) do
+    desc "Oracle url style to use: tnsnames (jdbc:oracle:thin:@host:port:SID) or service (jdbc:oracle:thin:@//host:port/service_name)"
+    defaultto 'tnsnames' # for backwards compatibility
+    validate do |value|
+      allowed_vals = [ nil, '', 'tnsnames', 'service']
+      unless allowed_vals.include?(value)
+        raise ArgumentError, "oraurlstyle must be one of #{allowed_vals}, but is '#{value}'"
+      end
+    end
+    munge do |value|
+      if value == '' then nil else value end
+    end
+  end
+
   newproperty(:jdbcscheme) do
     desc "jdbcscheme to be used"
     isrequired

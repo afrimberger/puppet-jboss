@@ -275,6 +275,18 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     provider_impl.jta = value
   end
 
+  def oraurlstyle
+    if oracle?
+      connectionHash()[:OraUrlStyle]
+    else
+      @resource[:oraurlstyle]
+    end
+  end
+
+  def oraurlstyle= value
+    writeConnection :OraUrlStyle, value
+  end
+
   def xa?
     if not @resource[:xa].nil?
       return @resource[:xa]
@@ -437,6 +449,7 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
       :PortNumber   => nil,
       :DatabaseName => nil,
       :Query        => nil,
+      :OraUrlStyle  => nil,
     }
     begin
       if xa? then connectionHashFromXa else connectionHashFromStd end
@@ -479,16 +492,43 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     "/subsystem=datasources/#{datasource_type(is_xa)}=#{@resource[:name]}"
   end
 
-  def parseOracleConnectionUrl(url)
+
+  def parseOracleConnectionUrlTnsnames(url)
     splited = url.split '@'
     scheme = splited[0].sub 'jdbc:', ''
     host, port, dbname = splited[1].split ':'
     return {
-      :Scheme       => scheme,
-      :ServerName   => host,
-      :PortNumber   => port.to_i,
-      :DatabaseName => dbname,
+        :OraUrlStyle  => 'tnsnames',
+        :Scheme       => scheme,
+        :ServerName   => host,
+        :PortNumber   => port.to_i,
+        :DatabaseName => dbname,
     }
+  end
+
+
+  def parseOracleConnectionUrlService(url)
+    splited = url.split '@'
+    scheme = splited[0].sub 'jdbc:', ''
+    stripped = splited[1][2..-1] # cut trailing //
+    stripped.sub!('/', ':')
+
+    host, port, dbname = stripped.split ':'
+    return {
+        :OraUrlStyle  => 'service',
+        :Scheme       => scheme,
+        :ServerName   => host,
+        :PortNumber   => port.to_i,
+        :DatabaseName => dbname,
+    }
+  end
+
+  def parseOracleConnectionUrl(url)
+    if url.include?('@//')
+      parseOracleConnectionUrlService(url)
+    else
+      parseOracleConnectionUrlTnsnames(url)
+    end
   end
 
   def parseH2ConnectionUrl(url)
@@ -529,6 +569,7 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
     port = @resource[:port]
     dbname = @resource[:dbname]
     options = @resource[:urlquery]
+    ora_urlstyle = @resource[:oraurlstyle]
     query   = ''
 
     unless options.eql?('')
@@ -537,7 +578,11 @@ module Puppet_X::Coi::Jboss::Provider::Datasource
 
     if oracle?
       port = 1521 if port <= 0
-      url = "#{scheme}@#{host}:#{port}:#{dbname}#{query}"
+      if (ora_urlstyle == 'tnsnames')
+        url = "#{scheme}@#{host}:#{port}:#{dbname}#{query}"
+      else
+        url = "#{scheme}@//#{host}:#{port}/#{dbname}#{query}"
+      end
     else
       port_with_colon = if port > 0 then ":#{port}" else '' end
       url = "#{scheme}://#{host}#{port_with_colon}/#{dbname}#{query}"

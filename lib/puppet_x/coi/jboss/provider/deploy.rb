@@ -90,6 +90,8 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
   end
 
   def deploy
+
+    Puppet.debug("------------------------------------------> DEPLOY #{@resource[:jndi]}")
     cmd = "deploy #{@resource[:source]} --name=#{@resource[:jndi]}#{runtime_name_param_with_space_or_empty_string}"
     if @resource[:runasdomain]
       servergroups = @resource[:servergroups]
@@ -107,6 +109,7 @@ module Puppet_X::Coi::Jboss::Provider::Deploy
   end
 
   def undeploy
+    Puppet.debug("------------------------------------------> UN-DEPLOY #{@resource[:jndi]}")
     cmd = "undeploy #{@resource[:jndi]}"
     if @resource[:runasdomain]
       servergroups = @resource[:servergroups]
